@@ -420,7 +420,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <blockquote>
 <div class="paragraph">
 <p>The <em>Cities</em> application was designed to presnet a list of cities back from a web service request
-In this lab, we&#8217;ll buse Spring Boot to auto configure HSQL for standalone mode and MySQL in Cloud Foundry.</p>
+In this lab, we&#8217;ll use Spring Boot to auto configure H2 for standalone mode and MySQL in Cloud Foundry.</p>
 </div>
 <div class="paragraph">
 <p>Cloud Foundry services are managed through two primary types of operations:</p>
@@ -443,11 +443,12 @@ For a database this could mean creating/deleting a schema in an existing multite
 </div>
 </div>
 <div class="sect1">
-<h2 id="_a_bit_of_review">H2 in standalone mode</h2>
+<h2 id="_a_bit_of_review">Recap</h2>
 <div class="sectionbody">
-<div class="paragraph">
-<p>Lets download a more complex application from here: <a href="https://github.com/skazi-pivotal/Dev101-Cities-Service">Cities Service</a>.</p>
-</div>
+<ol class="arabic">
+<li>
+<p>Lets download a more complex application from here: <a href="https://github.com/skazi-pivotal/Dev101-Cities-Service" target="_blank">Cities Service</a>.</p>
+</li>
 <div class="listingblock">
 <div class="content">
 <pre>$ cd ..
@@ -455,49 +456,86 @@ $ git clone https://github.com/skazi-pivotal/Dev101-Cities-Service
 $ cd Dev101-Cities-Service</pre>
 </div>
 </div>
-<div class="paragraph">
+<li>
 <p>Build and run the code.</p>
-</div>
+</li>
 <div class="listingblock">
 <div class="content">
 <pre>$ ./gradlew build
 $ ./gradlew bootRun</pre>
 </div>
 </div>
-<div class="paragraph">
-<p>Examine the class called WebController and access the following URLs, try to understand the behaviour.</p>
-</div>
+<li>
+<p>Examine the class called io.pivotal.fe.demos.controller.WebController and access the following URLs, try to understand the behaviour. It's very similar to what we've built already.</p>
+</li>
 <div class="listingblock">
 <div class="content">
 <pre>
-<a href="http://localhost:8080/cities_all">http://localhost:8080/cities_all</a>
-<a href="http://localhost:8080/city?cityToShow=Guildford">http://localhost:8080/city?cityToShow=Guildford</a>
+<a href="http://localhost:8080/cities_all" target="_blank">http://localhost:8080/cities_all</a>
+<a href="http://localhost:8080/city?cityToShow=Guildford" target="_blank">http://localhost:8080/city?cityToShow=Guildford</a>
+<a href="http://localhost:8080/city?cityToShow=Farnborough" target="_blank">http://localhost:8080/city?cityToShow=Farnborough</a>
 </pre>
 </div>
 </div>
-<div class="paragraph">
-<p>Now, we need to configure H2, with Spring Boot this is easy because of it's opinionated behaviour, we just add the  H2 library to the build.gradle. In fact, lets add several libraries such as spring data, we willl explain more in due course, but they are alreay in the project. Uncomment the line for H2 as below:</p>
+</ol>
 </div>
+<div class="sect1">
+<h2 id="_h2">H2 in standalone mode</h2>
+<div class="sectionbody">
+<ol class="arabic">
+<li>
+<p>Let's use Spring JPA to amend this project to read cities from a database rather than a hard coded array. We'll use H2 for simplicity we need to configure it. With Spring Boot this is easy because of it's opinionated behaviour, we just add the H2 library to the build.gradle (in fact lets add several libraries).</p>
 <div class="listingblock">
 <div class="content">
 <pre>dependencies {
     compile('org.springframework.boot:spring-boot-starter-web')
     compile("org.springframework.boot:spring-boot-starter-actuator")
-    testCompile('org.springframework.boot:spring-boot-starter-test')
-    compile("org.springframework.boot:spring-boot-starter-data-jpa")
+    testCompile('org.springframework.boot:spring-boot-starter-test') 
     compile("org.springframework.boot:spring-boot-starter-data-rest")
     compile 'org.springframework.cloud:spring-cloud-spring-service-connector'
     compile 'org.springframework.cloud:spring-cloud-cloudfoundry-connector'
-    runtime("org.flywaydb:flyway-core")
+    
+    <b>//Uncomment These three lines only
+    //compile("org.springframework.boot:spring-boot-starter-data-jpa")
+    //runtime("org.flywaydb:flyway-core")
+    //runtime('com.h2database:h2')</b>
+    
+    
     //runtime("org.hsqldb:hsqldb")
-    runtime('com.h2database:h2')
     //runtime("mysql:mysql-connector-java")
 }</pre>
 </div>
 </div>
-<div class="paragraph">
-<p>Create a new Java Interface called io.pivotal.fe.demos.repositories.CityRepository and make it look like below:</p>
+<p>If you are using Eclipse, right click the project and select Gradle, Refresh all.</p>
+</li>
+<li>
+<p>Amend the City class to make it an <code>Entity</code>. Add the following annotations above the class declaration and annotate the fields below to replace the previous definition:</p>
+<div class="listingblock">
+<div class="content">
+<pre>@Entity
+@Table(name = "uktowns")
+public class City {
+
+	@Id
+	@GeneratedValue
+	private long id;
+	@Column
+	private String name;
+	@Column
+	private String county;
+	@Column(name = "gridref")
+	private String stateCode;
+	@Column(name = "postcode")
+	private String postalCode;
+	@Column
+	private String latitude;
+	@Column
+	private String longitude;</pre>
 </div>
+</div>
+</li>
+<li>
+<p>Create a new Java Interface called io.pivotal.fe.demos.repositories.CityRepository and make it look like below:</p>
 <div class="listingblock">
 <div class="content">
 <pre>
@@ -515,106 +553,120 @@ import io.pivotal.fe.demos.domain.City;
 @RepositoryRestResource(collectionResourceRel = "cities", path = "cities")
 public interface CityRepository extends PagingAndSortingRepository&#60;City, Long&#62; {
 
-    Page<City> findAll(Pageable pageable);
+    Page&#60;City&#62; findAll(Pageable pageable);
 
     @RestResource(exported = false)
     City findById(Long id);
 
     @RestResource(path = "name", rel = "name")
-    Page<City> findByNameIgnoreCase(@Param("q") String name, Pageable pageable);
+    Page&#60;City&#62; findByNameIgnoreCase(@Param("q") String name, Pageable pageable);
 
     @RestResource(path = "nameContains", rel = "nameContains")
-    Page<City> findByNameContainsIgnoreCase(@Param("q") String name, Pageable pageable);
+    Page&#60;City&#62; findByNameContainsIgnoreCase(@Param("q") String name, Pageable pageable);
 
     @RestResource(path = "state", rel = "state")
-    Page<City> findByStateCodeIgnoreCase(@Param("q") String stateCode, Pageable pageable);
+    Page&#60;City&#62; findByStateCodeIgnoreCase(@Param("q") String stateCode, Pageable pageable);
 
     @RestResource(path = "postalCode", rel = "postalCode")
-    Page<City> findByPostalCode(@Param("q") String postalCode, Pageable pageable);
+    Page&#60;City&#62; findByPostalCode(@Param("q") String postalCode, Pageable pageable);
 }
 </pre>
 </div>
 </div>
-<div class="paragraph">
+</li>
+<li>
 <p>Build and run the code again:</p>
-</div>
 <div class="listingblock">
 <div class="content">
 <pre>$ ./gradlew build
 $ ./gradlew bootRun</pre>
 </div>
 </div>
-<div class="paragraph">
-<p>Access the following URL: <a href="http://localhost:8080/cities">http://localhost:8080/cities</a> and you will see a much bigger list of cities, formatted as neat JSON- yet we did not define any concrete Java Implementation. A couple of things are hapening here, Spring Boot has looked at our classpath and automatically constructed an instance of H2 and configured Spring data to access it. Secondly, we have pre-populated data in the databse using a product called Flyway (to find out more have a look here: <a href="https://docs.spring.io/spring-boot/docs/current/reference/html/howto-database-initialization.html">Database Initialisation with Spring Boot</a>. Finally, we have used Spring JPA to atuomatically create web service endpoints to access the data.</p>
-<p>In fact, because we our using JPA, there is now much more accessible, look at the CityRepository Interface and these URLS and you will see how simple it is to expose this great functionality.</p>
-</div>
+</li>
+<p>Access the following URL: <a href="http://localhost:8080/cities" target="_blank">http://localhost:8080/cities</a> and you will see a much bigger list of cities, formatted as neat JSON- yet we did not define any concrete Java Implementation. </p>
+<p>A couple of things are hapening here: </p>
+<ol class="arabic">
+<li>Spring Boot has looked at our classpath and automatically constructed an instance of H2 and configured Spring data to access it. 
+<li>Secondly, we have pre-populated data in the databse using a product called Flyway (to find out more have a look here: <a href="https://docs.spring.io/spring-boot/docs/current/reference/html/howto-database-initialization.html">Database Initialisation with Spring Boot</a>. Spring Boot is automatically triggering Flyway and running it's initalisation.
+<li>Finally, we have used Spring JPA to atuomatically create web service endpoints to access the data, with an ability to do wildcard searches, yet we have not written any actual implementation code.</p>
+</ol>
+<p>Try out these URLS and you will see how powerful this class is, without any direct implementation. Spring has guessed what we want to do simply bacause of the io.pivotal.fe.demos.repositories.CityRepository interface.</p>
 <div class="listingblock">
 <div class="content">
 <pre>
-<a href="http://localhost:8080/cities">http://localhost:8080/cities_all</a>
-<a href="http://localhost:8080/cities/search">http://localhost:8080/city?cityToShow=Guildford</a>
-<a href="http://localhost:8080/cities/search/name?q=Farnborough">http://localhost:8080/cities/search/name?q=Farnborough</a>
-<a href="http://localhost:8080/cities/search/nameContains?q=Farn">http://localhost:8080/cities/search/nameContains?q=Farn</a>
-<a href="http://localhost:8080/cities/search/nameContains?q=Fa&size=3">http://localhost:8080/cities/search/nameContains?q=Fa&size=3</a>
+<a href="http://localhost:8080/cities" target="_blank">http://localhost:8080/cities</a>
+<a href="http://localhost:8080/cities/search" target="_blank">http://localhost:8080/cities/search</a>
+<a href="http://localhost:8080/cities/search/name?q=Alfold" target="_blank">http://localhost:8080/cities/search/name?q=Alfold</a>
+<a href="http://localhost:8080/cities/search/nameContains?q=Farn" target="_blank">http://localhost:8080/cities/search/nameContains?q=Farn</a>
+<a href="http://localhost:8080/cities/search/nameContains?q=Fa&size=3" target="_blank">http://localhost:8080/cities/search/nameContains?q=Fa&size=3</a>
 </pre>
 </div>
 </div>
-<div class="paragraph">
+<li>
 <p>Spring Boot made it really easy to expose this Spring JPA features - simply add the classes to the classpath and then annotate your class correctly.</p>
-<p>Spring Boot can also connect to traditonal databases such as MySQL should you have one on your computer, you would just need to comment out H2 and uncomment Mysql for example, create an @Config class to expose the db connection and a means to read properties such as URL, username to make a connection etc (which you can use profiles as we showed before to store credentials from different environments). Have a look at <i>io.pivotal.fe.demos.config.DataSourceConfig</i>.</p>
+<p>Spring Boot can also connect to traditonal databases such as MySQL should you have one on your computer or where your machine can access it.
+<p>
+<ol class="arabic">
+<li>You would just need to comment out H2 and uncomment Mysql for example</li>
+<li>Add properties in application.yml for the db url, username, password etc</li>
+<li>Optionally, use Spring profiles to load different connection URL, username etc for different execution environments. </li>
+<li>Create an @Config class to read the db connection details and map these to params and initialise a db connection. Have a look at <code>io.pivotal.fe.demos.config.DataSourceConfig</code>.</li>
+</ol>
+</p>
+<p>OR .... Run in a PaaS and get Spring Cloud to worry about it all ...</p>
+</li>
 </div>
-</div>
+</ol>
 </div>
 <div class="sect1">
 <h2 id="_the_services_marketplace">The Services Marketplace</h2>
 <div class="sectionbody">
-<div class="paragraph">
+<ol class="arabic">
+<li>
+<p>When we push our application to cloud foundry, we may want to use a DB service provided in the cloud. Cloud Foundry exposes these services in the marketplace.</p>
+<li>
 <p>There are two ways to discover what services are available on Pivotal Web Services.
-The first is available on any instance of Cloud Foundry: the CLI. Just type:</p>
-</div>
+The first is available in the CLI. Just type:</p>
 <div class="listingblock">
 <div class="content">
-<pre>$ cf marketplace</pre>
+<pre>$ cf marketplace
+$ cf marketplace -s p-mysql</pre>
 </div>
 </div>
-<div class="paragraph">
-<p>and you&#8217;ll get a list of services, their available plans, and descriptions.</p>
-</div>
-<div class="paragraph">
+<p>and you&#8217;ll get a list of services, their available plans and descriptions.</p>
+</li>
+<li>
 <p>The second way is specific to Pivotal Cloud Foundry&#8217;s Application Manager UI.
-If you haven&#8217;t already, login to it by visiting https://apps.emea-2.fe.gopivotal.com.</p>
-</div>
+If you haven&#8217;t already, login to it by visiting <a href="https://apps.emea-2.fe.gopivotal.com" target="_blank">https://apps.emea-2.fe.gopivotal.com</a> and click on the Marketplace link on the left.</p>
+</li>
+</ol>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_creating_and_binding_to_a_service_instance">Creating and Binding to a MySQL Instance in the cloud</h2>
+<h2 id="_creating_and_binding_to_a_service_instance">Connecting to a MySQL Instance in Cloud Foundry</h2>
 <div class="sectionbody">
-<div class="olist arabic">
 <ol class="arabic">
 <li>
 <p>Let&#8217;s begin by creating a MySql instance provided by Pivotal.</p>
 </li>
-</ol>
-</div>
-<div class="paragraph">
-<p>From the CLI, let&#8217;s <em>create</em> a p-mysql service instance:</p>
-</div>
+<li>
+<p>From the CLI, let&#8217;s <em>create</em> a p-mysql service instance called 'MyDB':</p>
 <div class="listingblock">
 <div class="content">
 <pre>$ cf create-service p-mysql 100mb-dev MyDB</pre>
 </div>
 </div>
-<div class="olist arabic">
-<ol class="arabic">
+</li>
 <li>
-<p>Next we&#8217;ll <em>push and bind</em> the newly created instance to our <code>cities</code> application - have a look at the manifest of this application.</p>
+<p>Next we&#8217;ll <em>push and bind</em> the newly created instance to our <code>cities</code> application. First have a look at the manifest of this application, it's set to automatically bind to the 'MyDB' service - it doesn't define url, username etc at all. Now, deploy the application.</p>
 <div class="listingblock">
 <div class="content">
-<pre>$ cf push</pre>
+<pre>$ ./gradlew build
+$ cf push</pre>
 </div>
 </div>
-<p>You can watch in more detail how Flyway pre-loads data by opening a new window and tailing the logs or viewing the logs in the Apps Manager.</p>
-<p>Once deployed, access the application using the url supplied by CF (but append /cities to the end, e.g. <a href="https://cities-random-word.emea-2.fe.gopivotal.com/cities">https://cities-service-random-word.emea-2.fe.gopivotal.com/cities</a> (Accept all warnings about SSL certificates).</p>
+<p>One of the libraries we uncommented in our <code>build.gradle</code> is FlyWay, we're using this to pre-initialise our databsase. You can watch in more detail how Flyway pre-loads data by opening a new window and tailing the logs or viewing the logs in the Apps Manager.</p>
+<p>Once deployed, access the application using the url supplied by CF (but append /cities to the end, e.g. <a href="https://your-URL/cities" target="_blank">https://your-URL/cities</a> (Accept all warnings about SSL certificates).</p>
 <div class="listingblock">
 <div class="content">
 <pre>$ cf logs cities-service</pre>
@@ -625,12 +677,10 @@ If you haven&#8217;t already, login to it by visiting https://apps.emea-2.fe.gop
 <p>Let&#8217;s take a look at the environment variables for our application to see what&#8217;s been done. We can do this by typing:</p>
 <div class="listingblock">
 <div class="content">
-<pre>$ cf env spring-music</pre>
+<pre>$ cf env cities-service</pre>
 </div>
 </div>
-<div class="paragraph">
 <p>The subset of the output we&#8217;re interested in is located near the very top, titled <code>System-Provided</code>:</p>
-</div>
 <div class="exampleblock">
 <div class="content">
 <div class="listingblock">
@@ -650,7 +700,7 @@ If you haven&#8217;t already, login to it by visiting https://apps.emea-2.fe.gop
      "username": "mWsYAON34zbaQPAA"
     },
     "label": "p-mysql",
-    "name": "spring-music-db",
+    "name": "cities-service-db",
     "plan": "100mb-dev",
     "tags": [
      "mysql",
@@ -673,7 +723,7 @@ If you haven&#8217;t already, login to it by visiting https://apps.emea-2.fe.gop
    "fds": 16384,
    "mem": 512
   },
-  "name": "spring-music",
+  "name": "cities-service",
   "space_id": "080ba4e6-bafc-482b-9a98-42f612eef736",
   "space_name": "jfullam",
   "uris": [
@@ -685,13 +735,12 @@ If you haven&#8217;t already, login to it by visiting https://apps.emea-2.fe.gop
 }</pre>
 </div>
 </div>
-<div class="colist arabic">
-<ol>
+<ol class="arabic">
 <li>
 <p><code>VCAP_SERVICES</code> is a special Cloud Foundry environment variable that contains a JSON document containing all of the information for any services bound to an application.</p>
 </li>
 <li>
-<p>Notice here the unique URI for this instance of MySql that <code>spring-music</code> has been bound to.</p>
+<p>Notice here the unique URI for this instance of MySql that <code>cities-service</code> has been bound to.</p>
 </li>
 <li>
 <p>Notice again, we didn't need to do anything in the code, Spring Boot and Spring Cloud automatically scan and parse for cloud config, Spring Boot automatically triggers a "cloud" profile and ignores any properties.</p>
@@ -699,15 +748,24 @@ If you haven&#8217;t already, login to it by visiting https://apps.emea-2.fe.gop
 </ol>
 </div>
 </div>
-</div>
 </li>
 <li>
-<p><strong>(OPTIONAL STEPS)</strong> If you have a MySql GUI tool handy and you are using a lab environment that has the necessary network access (ask your instructor), you can inspect the music database created. Otherwise, your instructor will demo via a Pivotal VPN connection.</p>
+<p><strong>(OPTIONAL STEPS)</strong></p>
+<ol class="arabic">
+<li>If you have a MySql GUI tool handy and you are using a lab environment that has the necessary network access (ask your instructor), you can inspect the music database created. Otherwise, your instructor will demo via a Pivotal VPN connection.</p>
 </li>
 <li>
 <p>In your DB tool, create a new server connection and populate the properties with values from the URI in your <code>VCAP_SERVICES</code> environment variable (remember <code>cf env cities-service</code>!):</p>
 </li>
 </ol>
+</li>
+</div>
+</div>
+</li>
+<li><p>Move onto <a href="lab_06.html" class="bare">lab 6</a>.</p></li>
+</ol>
+</div>
+</div>
 </div>
 </div>
 </div>

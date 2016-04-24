@@ -420,7 +420,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let's download a pre-built application from <a href="https://github.com/skazi-pivotal/spring-boot-cities-ui">here</a>.</p>
+<p>Let's download a pre-built application from <a href="https://github.com/skazi-pivotal/spring-boot-cities-ui" target="_blank">here</a>.</p>
 </li>
 <div class="listingblock">
 <div class="content">
@@ -443,13 +443,13 @@ $ ./gradlew bootRun</pre>
 </li>
 <div class="listingblock">
 <div class="content">
-<pre><a href="http://localhost:8081/">http://localhost:8081/</a></pre>
+<pre><a href="http://localhost:8081/" target="_blank">http://localhost:8081/</a></pre>
 </div>
 </div>
 <p>If you get an error, it's most likely that you don't have the first microservice running. Likewise, if you don't get an error, stop the other microservice. You should now have two microservices running, the UI on port 8081, and the back-end one running on port 8080.</p>
 <div class="listingblock">
 <div class="content">
-<pre><a href="http://localhost:8081/">http://localhost:8080/cities</a></pre>
+<pre><a href="http://localhost:8080/cities" target="_blank">http://localhost:8080/cities</a></pre>
 </div>
 </div>
 <p>How are they connected together? The clue is in the class: io.pivotal.fe.demos.citiesui.repository.CityRepository on line 55. You will see that there is no hardcoding, the URL is injected using spring properties/configuration.</p>
@@ -479,31 +479,18 @@ cf cups citiesService -p '{"tags":"cities","uri":"http://<b>INSERT YOUR URL HERE
 cf push -b java_buildpack_offline</pre>
 </div>
 </div>
-</ol>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_discovery">Adding a UI .... in the cloud ... using a Discovery Server</h2>
-<div class="sectionbody">
-<div class="olist arabic">
-<ol class="arabic">
 <li>
-<p>The first step is get the Eureka libraries in our project. Change you build.gradle, remove the following two lines:</p>
+<p>What just happened? We created a "service definition", just like MySQL, but this is a User Provided Service (cups) called 'citiesService'. Like the previous services we defined, they are exposed to the application as Environment variables containing the URL of our backend cities Microservice. Spring Boot initalises a Cloud Connector, allowing Spring Cloud to auto-wire and inject this value into our application.</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ cf env cities-ui</pre>
+</div>
+</div>
+<p>This is cool, but there is a better way ...</p>
 </li>
-<div class="listingblock">
-<div class="content">
-<pre>    compile 'org.springframework.cloud:spring-cloud-spring-service-connector'
-    compile 'org.springframework.cloud:spring-cloud-cloudfoundry-connector'</pre>
-</div>
-</div>
-<p>and replace with:</p>
-<div class="listingblock">
-<div class="content">
-<pre>    compile("io.pivotal.spring.cloud:spring-cloud-services-starter-service-registry")</pre>
-</div>
-</div>
+<li><p>Move onto <a href="lab_07.html" class="bare">lab 7</a>.</p></li>
 </ol>
+</div>
 </div>
 </div>
 </div>
