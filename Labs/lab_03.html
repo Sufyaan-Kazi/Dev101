@@ -497,7 +497,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </li>
 <li>
-<p>To tidy up the JSON output, add the following to your application.yml:</p>
+<p>To tidy up the JSON output, add the following to your application.yml (before the Spanish profile):</p>
 <div class="listingblock">
 <div class="content">
 <pre>spring:
@@ -639,10 +639,6 @@ private GreetingService greetingService;
 @RequestMapping("/")
 public String hello() {
     return String.format("%s World!", greetingService.getGreeting());
-}
-
-public static void main(String[] args) {
-    SpringApplication.run(HelloSpringBootApplication.class, args);
 }</pre>
 </div>
 </div>
