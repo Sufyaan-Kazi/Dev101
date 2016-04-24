@@ -5,7 +5,7 @@
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 1.5.2">
-<title>Lab 7 - Connecting to other Microservices using a Discovery Service</title>
+<title>Lab 8 - Isolating Microservices</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -411,171 +411,114 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article">
 <div id="header">
-<h1>Lab 7 - Connecting Microservices using a Discovery Service</h1>
+<h1>Lab 8 - Isolating Microservices</h1>
 </div>
 <div id="content">
 <div class="sect1">
-<h2 id="_discovery">Registering with a Discovery Server</h2>
+<h2 id="_fetch">Fortune Teller</h2>
 <div class="sectionbody">
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>First, let's remove the apps we just pushed and the User Provided Service.</p>
+Let's create a new empty space in Coud Foundry.
 <div class="listingblock">
 <div class="content">
-<pre>$ cf delete -f -r cities-service
-$ cf delete -f -r cities-ui
-$ cf delete-service -f citiesService</pre>
+<pre>$ cf create-space fortune
+$ cf target -s fortune
+$ cf apps
+$ cf services</pre>
 </div>
 </div>
 </li>
 <li>
-<p>Now, lets go back to the original cities-service microservice. We want to push this to cloud foundry again, but this time make it register with a Eureka server.</p>
-<p>The first step is get the Eureka libraries in our project, change you build.gradle and replace the following two lines:</p>
-</li>
-<div class="listingblock">
-<div class="content">
-<pre>    compile 'org.springframework.cloud:spring-cloud-spring-service-connector'
-    compile 'org.springframework.cloud:spring-cloud-cloudfoundry-connector'</pre>
-</div>
-</div>
-<p>with:</p>
-<div class="listingblock">
-<div class="content">
-<pre>    compile("io.pivotal.spring.cloud:spring-cloud-services-starter-service-registry")</pre>
-</div>
-</div>
-<li>
-<p>Open the application.yml file and add the location of the Eureka server - well actually we've already done this for you ! This allows you to connect to a Eureka Server when you run this application standalone - but we won't use it, we're going to use one in the Cloud.</p>
-</li>
-<div class="listingblock">
-<div class="content">
-<pre>eureka:
-  client:
-    serviceUrl:
-      defaultZone: http://localhost:8761/eureka/</pre>
-</div>
-</div>
-<li>
-<p>Open the main Spring Boot application: io.pivotal.fe.demos.SBootCitiesServiceApplication and add the following annotation to the top of the class:</p>
-</li>
-<div class="listingblock">
-<div class="content">
-<pre>.....
-@SpringBootApplication
-<b>@EnableDiscoveryClient</b>
-public class SBootCitiesServiceApplication {
-......</pre>
-</div>
-</div>
-<li>
-<p>That's it! You've made this class Eureka enabled!</p>
-</li>
-<p>If you tried to run this standlaone it will fail, you now need to have a Eureka server running locally or configure the properties file to point to valid one. (After this class, you can look at this example to find out how to build one: <a href="https://github.com/skazi-pivotal/EurekaServiceReg">https://github.com/skazi-pivotal/EurekaServiceReg</a>).</p>
-<li>
-<p>Now, let's run the improved applicaton on Cloud Foundry.</p>
-<p>Firstly we need to create an instance of a Eureka Server called 'ServiceReg'. Run the following command:</p>
-</li>
-<div class="listingblock">
-<div class="content">
-<pre>cf create-service p-service-registry standard ServiceReg</pre>
-</div>
-</div>
-<p>This will create an instance of a Service Dicovery server, called 'ServiceReg'. Unlike other services, this takes about two minutes to finalise so we'll let this complete in the background.</p>
-<li>
-<p>You now need to add this service name to your manifest file. Open your manifest.yml and add a line to bind to the 'ServiceReg' service:</p>
-</li>
-<div class="listingblock">
-<div class="content">
-<pre>  services:
-   - MyDB
-   <b>Add a line here to bind to ServiceReg ...</b>
-env:
-    JAVA_OPTS: -Djava.security.egd=file:///dev/urandom</pre>
-</div>
-</div>
-<li>
-<p>We now need to give our application a name which will be used when we register with Eureka. We could hardcode this, or we could pull this value dynamically from cloud foundry using the name of the app we push. As before, we have done this for you already in the application.yml:</p>
-</li>
-<div class="listingblock">
-<div class="content">
-<pre>spring:
-  application:
-    name: ${vcap.application.application_name:cities}</pre>
-</div>
-</div>
-<p>Lets pause for a moment:</p>
-<ul>
-<li>We have a microservice which gets it's Service name directly from Cloud Foundry, importantly from the manifest when we push the app.</li>
-<li>We created a service instance of Eureka.</li>
-<li>When we push the app, it will bind to this instance of Eureka making it discoverable by other Microservices.</li>
-</ul>
-<p>At no point are we hard-coding:</p>
-<ul>
-<li>The Eureka Server ip address</li>
-<li>The ip address of the applicaiton we push</li>
-</ul>
-<p>This application uses an immutable infrastructure and so is pretty dynamic.</p>
-<li>
-<p>Our Eureka server may not yet be ready and is possibly still initialising. Log into the Apps Manager Console and locate your space. In here, locate your instance of Eureka and click on Manage. This takes you to a dashboard and will let you know once the instance is ready.</p>
-</li>
-<li>
-<p>Once Eureka is ready, just push the application:</p>
-</li>
-<div class="listingblock">
-<div class="content">
-<pre>$ ./gradlew build
-$ cf push -b java_buildpack_offline</pre>
-</div>
-</div>
-<li>
-<p>About 60 seconds after the application is deployed, you will see it register in the Eureka dashbaord and you will be able to access application as normal, this will take a bit longer than usual. Try it out!</p>
-</li>
-</ol>
-</div>
-</div>
-</div>
-</div>
-<div id="content">
-<div class="sect1">
-<h2 id="_discovery">Finding Microservices using a Discovery Server</h2>
-<div class="sectionbody">
-<p>Previously, we connected the UI to this app by explicitly connecting the apps together using a <a href="http://docs.pivotal.io/pivotalcf/devguide/services/user-provided.html">User Provided Service</a>, now let's switch to use Eureka.</p>
-<ol class="arabic">
-<li>
-<p>As we've done before, we need to make this microservice Eureka aware and then change the way it locates the other microservice. Fortunately we've done the hard work already, let's get the SCS branch of this app:</p>
-</li>
+<p>For this lab, we will use another application, <a href="https://github.com/spring-cloud-samples/fortune-teller" target="_blank">https://github.com/spring-cloud-samples/fortune-teller</a></p>
 <div class="listingblock">
 <div class="content">
 <pre>$ cd ..
-$ cd spring-boot-cities-ui
-$ git checkout SCS</pre>
+$ git clone https://github.com/spring-cloud-samples/fortune-teller.git
+$ cd fortune-teller
+$ mvn package</pre>
 </div>
 </div>
-<li>
-<p>Before using Eureka, we need to set a variable called CF_TARGET, this is simply because our Cloud Foundry installation is using a self-signed SSL certificate. Edit the manifest.yml and add the following line:</p>
 </li>
+<li>
+<p>Create the required Cloud Foundery Services:</p>
 <div class="listingblock">
 <div class="content">
-<pre>env:
-    JAVA_OPTS: -Djava.security.egd=file:///dev/urandom
-    <b>CF_TARGET: https://api.emea-2.fe.gopivotal.com</b></pre>
+<pre>$ cf cs p-mysql 100mb-dev fortunes-db
+$ cf cs p-config-server standard config-service
+$ cf cs p-service-registry standard service-registry
+$ cf cs p-circuit-breaker-dashboard standard circuit-breaker</pre>
 </div>
 </div>
-<li>
-<p>Build and push the application:</p>
 </li>
+<li>
+<p>In the Pivotal Cloud Foundry Apps Manager console, click on the Manage link for the Config Server. Once the service is initialized and the web form appears, paste the URL of the fortune teller repository (<a href="https://github.com/spring-cloud-samples/fortune-teller" target="_blank">https://github.com/spring-cloud-samples/fortune-teller</a>) into the Git URI field and "configuration" into the Search Paths field. Then click Submit.</p>
+</li>
+<li>
+<p>Edit the manifest-pcf.yml file to specify the Cloud Foundry target the apps are being pushed to, replacing the URL in CF_TARGET: https://api.cf.deepsouthcloud.com with https://api.emea-2.fe.gopivotal.com. Also replace the two lines which begin with <code>host: </code> to ensure a unique hostname is assigned:</p>
 <div class="listingblock">
 <div class="content">
-<pre>$ ./gradlew build
-$ cf push -b java_buildpack_offline</pre>
+<pre>  random-route: true</pre>
 </div>
 </div>
-<li>
-<p>Once deployed, you should see it registered in the Eureka dashboard as well. The manifest.yml file for this app already binds it to the 'ServiceReg' service and the application simply asks Eureka for a service called: 'cities-service'.</p>
 </li>
-<li><p>Move onto <a href="lab_08.html" class="bare">lab 8</a>.</p></li>
+<li>
+<p>Push the microservices:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ cf push -f manifest-pcf.yml</pre>
+</div>
+</div>
+</li>
+<li>
+<p>You can now access the UI application, it tells you a "fortune" by asking the fortune-service for a value to return.</p>
+</li>
+<li>
+<p>Back in the Apps Manager, access the Hysterix Dashboard by clicking on Manage under the 'circuit-breaker' dashboard and re-load the UI app several times to make sure this dashboard is updating.</a></p>
+</li>
+<li>
+<p>Stop the back-end service.</a></p>
+<div class="listingblock">
+<div class="content">
+<pre>$ cf stop fortune-service</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Keep refreshing the Apps Manager UI and checking the circuit braker dashbaord. The app still works, but the dashboard should show that the circuit is open and the error path is chosen.</a></p>
+</li>
+<li>Restart the fortunes service application:
+<div class="listingblock">
+<div class="content">
+<pre>$ cf start fortune-service</pre>
+</div>
+</div>
+</li>
+<li>
+Continue to access the fortunes-ui and watch the dashboard. After the fortunes service has re-registered with Eureka and the fortunes-ui load balancer caches are refreshed, you will see the circuit breaker recover. You should then start getting random fortunes again!
+</li>
+<li>
+<p>
+This application is using Spring Clouds' implementation of Circuit Breaker, whcih you can see in <code>io.spring.cloud.samples.fortuneteller.ui.services.fortunes.FortuneService</code>
+<div class="listingblock">
+<div class="content">
+<pre>...
+@HystrixCommand(fallbackMethod = "fallbackFortune")
+    public Fortune randomFortune() {
+        return restTemplate.getForObject("http://fortunes/random", Fortune.class);
+    }
+
+    private Fortune fallbackFortune() {
+        return new Fortune(42L, fortuneProperties.getFallbackFortune());
+    }
+...</pre>
+</div>
+</div>
+</p>
+</li>
 </ol>
+</div>
 </div>
 </div>
 </div>
