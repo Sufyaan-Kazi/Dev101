@@ -465,130 +465,45 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p>Try out the following endpoints. The output is omitted here because it can be quite large:</p>
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><a href="http://localhost:8080/beans" class="bare">http://localhost:8080/beans</a></dt>
+<dt class="hdlist1"><a href="http://localhost:8080/beans" class="bare" target="_blank">http://localhost:8080/beans</a></dt>
 <dd>
 <p>Dumps all of the beans in the Spring context.</p>
 </dd>
-<dt class="hdlist1"><a href="http://localhost:8080/autoconfig" class="bare">http://localhost:8080/autoconfig</a></dt>
+<dt class="hdlist1"><a href="http://localhost:8080/autoconfig" class="bare" target="_blank">http://localhost:8080/autoconfig</a></dt>
 <dd>
 <p>Dumps all of the auto-configuration performed as part of application bootstrapping.</p>
 </dd>
-<dt class="hdlist1"><a href="http://localhost:8080/configprops" class="bare">http://localhost:8080/configprops</a></dt>
+<dt class="hdlist1"><a href="http://localhost:8080/configprops" class="bare" target="_blank">http://localhost:8080/configprops</a></dt>
 <dd>
 <p>Displays a collated list of all <code>@ConfigurationProperties</code>.</p>
 </dd>
-<dt class="hdlist1"><a href="http://localhost:8080/env" class="bare">http://localhost:8080/env</a></dt>
+<dt class="hdlist1"><a href="http://localhost:8080/env" class="bare" target="_blank">http://localhost:8080/env</a></dt>
 <dd>
 <p>Dumps the application&#8217;s shell environment as well as all Java system properties.</p>
 </dd>
-<dt class="hdlist1"><a href="http://localhost:8080/mappings" class="bare">http://localhost:8080/mappings</a></dt>
+<dt class="hdlist1"><a href="http://localhost:8080/mappings" class="bare" target="_blank">http://localhost:8080/mappings</a></dt>
 <dd>
 <p>Dumps all URI request mappings and the controller methods to which they are mapped.</p>
 </dd>
-<dt class="hdlist1"><a href="http://localhost:8080/dump" class="bare">http://localhost:8080/dump</a></dt>
+<dt class="hdlist1"><a href="http://localhost:8080/dump" class="bare" target="_blank">http://localhost:8080/dump</a></dt>
 <dd>
 <p>Performs a thread dump.</p>
 </dd>
-<dt class="hdlist1"><a href="http://localhost:8080/trace" class="bare">http://localhost:8080/trace</a></dt>
+<dt class="hdlist1"><a href="http://localhost:8080/trace" class="bare" target="_blank">http://localhost:8080/trace</a></dt>
 <dd>
 <p>Displays trace information (by default the last few HTTP requests).</p>
 </dd>
 </dl>
 </div>
 </li>
-</ol>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_build_and_version_control_info">Build and Version Control Info</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Spring Boot provides an endpoint (<a href="http://localhost:8080/info" class="bare">http://localhost:8080/info</a>) that allows the exposure of arbitrary metadata.</p>
-</div>
-<div class="paragraph">
-<p>One thing that it does well is expose information about the specific build and version control coordinates for a given deployment.</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
 <li>
-<p>Add the following plugin to your Maven build.
-It will add Git branch and commit coordinates to the <code>/info</code> endpoint:</p>
+<p>To tidy up the JSON output, add the following to your application.yml:</p>
 <div class="listingblock">
 <div class="content">
-<pre>&lt;plugin&gt;
-	&lt;groupId&gt;pl.project13.maven&lt;/groupId&gt;
-	&lt;artifactId&gt;git-commit-id-plugin&lt;/artifactId&gt;
-	&lt;configuration&gt;
-			&lt;dotGitDirectory&gt;../../../../../.git&lt;/dotGitDirectory&gt;
-	&lt;/configuration&gt;
-&lt;/plugin&gt;</pre>
-</div>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">
-The path <code>../../../../../.git</code> refers to the <code>.git</code> directory at the root of the course materials.
-</td>
-</tr>
-</table>
-</div>
-</li>
-<li>
-<p>Add the following properties to <code>src/main/resources/application.yml</code>:</p>
-<div class="listingblock">
-<div class="content">
-<pre>info:
-  build:
-    artifact: @project.artifactId@
-    name: @project.name@
-    description: @project.description@
-    version: @project.version@</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>These will add the project&#8217;s Maven coordinates to the <code>/info</code> endpoint. The Spring Boot Maven plugin will cause them to automatically be replaced in the assembled JAR.</p>
-</div>
-</li>
-<li>
-<p>Build the application:</p>
-<div class="listingblock">
-<div class="content">
-<pre>$ mvn package</pre>
-</div>
-</div>
-</li>
-<li>
-<p>Run the application:</p>
-<div class="listingblock">
-<div class="content">
-<pre>$ java -jar target/hello-spring-boot-0.0.1-SNAPSHOT.jar</pre>
-</div>
-</div>
-</li>
-<li>
-<p>Visit the application in the browser (<a href="http://localhost:8080/info" class="bare">http://localhost:8080/info</a>), and verify that the output is similar to the following:</p>
-<div class="listingblock">
-<div class="content">
-<pre>{
-  build: {
-    artifact: "hello-spring-boot",
-    name: "hello-spring-boot",
-    description: "Hello Spring Boot",
-    version: "0.0.1-SNAPSHOT"
-  },
-  git: {
-    branch: "master",
-    commit: {
-      id: "a15f771",
-      time: "2015-05-03T16:51:31-0400"
-    }
-  }
-}</pre>
+<pre>spring:
+  jackson:
+    serialization:
+      indent_output: true</pre>
 </div>
 </div>
 </li>
@@ -600,7 +515,7 @@ The path <code>../../../../../.git</code> refers to the <code>.git</code> direct
 <h2 id="_health_indicators">Health Indicators</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Spring Boot provides an endpoint (<a href="http://localhost:8080/health" class="bare">http://localhost:8080/health</a>) that allows for the notion of various health indicators.</p>
+<p>Spring Boot provides an endpoint (<a href="http://localhost:8080/health" class="bare" target="_blank">http://localhost:8080/health</a>) that allows for the notion of various health indicators.</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -658,7 +573,7 @@ public class FlappingHealthIndicator implements HealthIndicator{
 </div>
 </li>
 <li>
-<p>Visit the application in the browser (<a href="http://localhost:8080/health" class="bare">http://localhost:8080/health</a>), and verify that the output is similar to the following (and changes randomly!):</p>
+<p>Visit the application in the browser (<a href="http://localhost:8080/health" class="bare" target="_blank">http://localhost:8080/health</a>), and verify that the output is similar to the following (and changes randomly!):</p>
 <div class="listingblock">
 <div class="content">
 <pre>{
@@ -685,7 +600,7 @@ public class FlappingHealthIndicator implements HealthIndicator{
 <h2 id="_metrics">Metrics</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Spring Boot provides an endpoint (<a href="http://localhost:8080/metrics" class="bare">http://localhost:8080/metrics</a>) that exposes several automatically collected metrics for your application.
+<p>Spring Boot provides an endpoint (<a href="http://localhost:8080/metrics" class="bare" target="_blank">http://localhost:8080/metrics</a>) that exposes several automatically collected metrics for your application.
 It also allows for the creation of custom metrics.</p>
 </div>
 <div class="olist arabic">
@@ -715,7 +630,7 @@ public class GreetingService {
 </div>
 </li>
 <li>
-<p>Refactor the contents of the class <code>io.spring.hello.HelloSpringBootApplication</code>:</p>
+<p>Refactor the contents of the class <code>io.spring.hello.HelloController</code>:</p>
 <div class="listingblock">
 <div class="content">
 <pre>@Autowired
@@ -752,10 +667,10 @@ public static void main(String[] args) {
 </div>
 </li>
 <li>
-<p>Visit the application in the browser (<a href="http://localhost:8080" class="bare">http://localhost:8080</a>) and refresh the page several times.</p>
+<p>Visit the application in the browser (<a href="http://localhost:8080" class="bare" target="_blank">http://localhost:8080</a>) and refresh the page several times.</p>
 </li>
 <li>
-<p>Now visit the <code>/metrics</code> endpoint (<a href="http://localhost:8080/metrics" class="bare">http://localhost:8080/metrics</a>).
+<p>Now visit the <code>/metrics</code> endpoint (<a href="http://localhost:8080/metrics" class="bare" target="_blank">http://localhost:8080/metrics</a>).
 Among the autogenerated metrics you should see a <code>counter</code> for the <code>GreetingService</code> invocations:</p>
 <div class="listingblock">
 <div class="content">
@@ -765,6 +680,7 @@ Among the autogenerated metrics you should see a <code>counter</code> for the <c
 <div class="paragraph">
 <p>To learn more about the autogenerated metrics, visit <a href="http://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-metrics.html" class="bare">http://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-metrics.html</a>.</p>
 </div>
+<li><p>Let's take a break!!</a>.</p></li>
 </li>
 </ol>
 </div>
