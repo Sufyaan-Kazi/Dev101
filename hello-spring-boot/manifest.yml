@@ -1,0 +1,7 @@
+---
+applications:
+- name: hello-world
+  memory: 256M
+  instances: 1
+  random-route: true
+  path: ./build/libs/hello-spring-boot-0.0.1-SNAPSHOT.jar

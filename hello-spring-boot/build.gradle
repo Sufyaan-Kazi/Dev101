@@ -10,6 +10,10 @@ buildscript {
 	}
 }
 
+plugins {
+    id "io.spring.dependency-management" version "0.6.0.RELEASE"
+}
+
 apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'spring-boot'
@@ -29,8 +33,12 @@ repositories {
 dependencies {
 	compile('org.springframework.boot:spring-boot-starter-web')
 	testCompile('org.springframework.boot:spring-boot-starter-test')
+	compile("org.springframework.boot:spring-boot-starter-actuator")
 }
 
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.0'
+}
 
 eclipse {
 	classpath {

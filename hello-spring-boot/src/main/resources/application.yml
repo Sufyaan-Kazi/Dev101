@@ -1,0 +1,9 @@
+greeting: Hello
+spring:
+  jackson:
+    serialization:
+      indent_output: true
+      
+endpoints:
+  health:
+    sensitive: false
